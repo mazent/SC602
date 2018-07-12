@@ -2,13 +2,11 @@
 
 from __future__ import print_function
 
-from bluepy.btle import Peripheral, DefaultDelegate, BTLEException
+import bluepy.btle as bt
 import json
 import time
 import random
 import string
-import threading
-
 try:
     # 2
     import Queue as coda
@@ -17,29 +15,13 @@ except ImportError:
     import queue as coda
 
 
-class _delega(DefaultDelegate):
+class _delega(bt.DefaultDelegate):
     def __init__(self, coda):
-        DefaultDelegate.__init__(self)
+        bt.DefaultDelegate.__init__(self)
         self.coda = coda
 
     def handleNotification(self, cHandle, data):
         self.coda.put((cHandle, data))
-
-class _notifiche(threading.Thread):
-    def __init__(self, perif):
-        threading.Thread.__init__(self)
-
-        self.perif = perif
-        self.continua = True
-
-    def run(self):
-        while self.continua:
-            self.perif.waitForNotifications(.5)
-
-    def esci(self):
-        self.continua = False
-
-
 
 def _acaso(size=6, chars=string.ascii_letters + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
@@ -51,12 +33,10 @@ class IOEX(object):
 
         dlg = _delega(self.coda)
         try:
-            self.dev = Peripheral(mac)
+            self.dev = bt.Peripheral(mac)
             self.dev.setMTU(512)
 
             self.dev.withDelegate(dlg)
-            self.notif = _notifiche(self.dev)
-            self.notif.start()
 
             self.crtL = None
             self.crtS = None
@@ -74,14 +54,11 @@ class IOEX(object):
                         else:
                             self.crtS = c
 
-        except BTLEException:
+        except bt.BTLEException:
             self.dev = None
 
     def __del__(self):
         if self.dev is not None:
-            self.notif.esci()
-            self.notif.join()
-
             self.dev.disconnect()
 
 
@@ -100,8 +77,11 @@ class IOEX(object):
         self.crtS.write(cmd, True)
 
         try:
-            x = self.coda.get(True, 1.0)
-            return x[1]
+            if self.dev.waitForNotifications(.1):
+                x = self.coda.get(False)
+                return x[1]
+            else:
+                return None
         except coda.Empty:
             return None
 
