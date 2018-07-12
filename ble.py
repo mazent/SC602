@@ -7,6 +7,7 @@ import json
 import time
 import random
 import string
+import threading
 
 try:
     # 2
@@ -24,10 +25,26 @@ class _delega(DefaultDelegate):
     def handleNotification(self, cHandle, data):
         self.coda.put((cHandle, data))
 
+class _notifiche(threading.Thread):
+    def __init__(self, perif):
+        threading.Thread.__init__(self)
+
+        self.perif = perif
+        self.continua = True
+
+    def run(self):
+        while self.continua:
+            self.perif.waitForNotifications(.5)
+
+    def esci(self):
+        self.continua = False
+
+
+
 def _acaso(size=6, chars=string.ascii_letters + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
-class BLE(object):
+class IOEX(object):
 
     def __init__(self, mac):
         self.coda = coda.Queue()
@@ -36,7 +53,10 @@ class BLE(object):
         try:
             self.dev = Peripheral(mac)
             self.dev.setMTU(512)
+
             self.dev.withDelegate(dlg)
+            self.notif = _notifiche(self.dev)
+            self.notif.start()
 
             self.crtL = None
             self.crtS = None
@@ -59,7 +79,11 @@ class BLE(object):
 
     def __del__(self):
         if self.dev is not None:
+            self.notif.esci()
+            self.notif.join()
+
             self.dev.disconnect()
+
 
     def a_posto(self):
         return self.crtS is not None
@@ -74,7 +98,6 @@ class BLE(object):
             cmd = json.JSONEncoder().encode(cmd_ver)
 
         self.crtS.write(cmd, True)
-        #self.dev.waitForNotifications(1)
 
         try:
             x = self.coda.get(True, 1.0)
@@ -85,7 +108,7 @@ class BLE(object):
 
 if __name__ == '__main__':
     mac = '00:a0:50:9e:2b:a7'
-    ble = BLE(mac)
+    ble = IOEX(mac)
     if ble.a_posto():
         x = ble.versione(100)
         if x is not None:
