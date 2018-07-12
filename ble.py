@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 
-from bluepy.btle import Peripheral, DefaultDelegate
+from bluepy.btle import Peripheral, DefaultDelegate, BTLEException
 import json
 import time
 import random
@@ -27,12 +27,12 @@ class _delega(DefaultDelegate):
 def _acaso(size=6, chars=string.ascii_letters + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
-class BLE(object)
+class BLE(object):
 
     def __init__(self, mac):
         self.coda = coda.Queue()
 
-        dlg = _delega(, self.coda)
+        dlg = _delega(self.coda)
         try:
             self.dev = Peripheral(mac)
             self.dev.setMTU(512)
@@ -41,7 +41,7 @@ class BLE(object)
             self.crtL = None
             self.crtS = None
 
-            srvz = dev.getServices()
+            srvz = self.dev.getServices()
             for srv in srvz:
                 crt = srv.getCharacteristics()
                 for c in crt:
@@ -53,7 +53,8 @@ class BLE(object)
                             self.crtL = c
                         else:
                             self.crtS = c
-        except bluepy.btle.BTLEException:
+
+        except BTLEException:
             self.dev = None
 
     def __del__(self):
@@ -67,12 +68,13 @@ class BLE(object)
         cmd_ver = {'TS': int(time.time())}
         cmd = json.JSONEncoder().encode(cmd_ver)
 
-        # Aggiungo "X": "..."
-        if dim > len(cmd) + 3 + 2 + 2 :
-            cmd_ver['X'] = _acaso(len(cmd) - (3 + 2 + 2))
+        # Aggiungo "X": "..." e il separatore col suo spazio
+        if dim > len(cmd) + 3 + 2 + 2 + 2:
+            cmd_ver['X'] = _acaso(dim - (len(cmd) + 3 + 2 + 2 + 2))
             cmd = json.JSONEncoder().encode(cmd_ver)
 
         self.crtS.write(cmd, True)
+        #self.dev.waitForNotifications(1)
 
         try:
             x = self.coda.get(True, 1.0)
@@ -84,7 +86,10 @@ class BLE(object)
 if __name__ == '__main__':
     mac = '00:a0:50:9e:2b:a7'
     ble = BLE(mac)
-    x = ble.versione()
-    if x is not None:
-        print(x)
+    if ble.a_posto():
+        x = ble.versione(100)
+        if x is not None:
+            print(x)
+        else:
+            print('err versione')
     del(ble)
