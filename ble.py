@@ -79,7 +79,7 @@ class IOEX(object):
         try:
             if self.dev.waitForNotifications(.5):
                 x = self.coda.get(False)
-                return x[1]
+                return x[1], len(x) + len(cmd)
             else:
                 return None
         except coda.Empty:
@@ -90,10 +90,18 @@ if __name__ == '__main__':
     mac = '00:a0:50:9e:2b:a7'
     ble = IOEX(mac)
     if ble.a_posto():
-        for _ in range(10):
+        TOT = 10
+        bene = 0
+        tot = 0
+        inizio = time.clock()
+        for _ in range(TOT):
             x = ble.versione(100)
             if x is not None:
-                print(x)
+                bene += 1
+                tot += x[1]
             else:
                 print('err versione')
+        durata = time.clock() - inizio
+        if TOT == bene:
+            print('{0} byte in {1} secondi'.format(bene, tot))
     del(ble)
