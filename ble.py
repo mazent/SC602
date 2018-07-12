@@ -77,7 +77,7 @@ class IOEX(object):
         self.crtS.write(cmd, True)
 
         try:
-            if self.dev.waitForNotifications(.1):
+            if self.dev.waitForNotifications(.5):
                 x = self.coda.get(False)
                 return x[1]
             else:
@@ -90,9 +90,10 @@ if __name__ == '__main__':
     mac = '00:a0:50:9e:2b:a7'
     ble = IOEX(mac)
     if ble.a_posto():
-        x = ble.versione(100)
-        if x is not None:
-            print(x)
-        else:
-            print('err versione')
+        for _ in range(10):
+            x = ble.versione(100)
+            if x is not None:
+                print(x)
+            else:
+                print('err versione')
     del(ble)
