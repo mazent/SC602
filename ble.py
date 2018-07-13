@@ -13,9 +13,15 @@ try:
 except ImportError:
     # 3
     import queue as coda
-
-
 import utili
+
+
+tempo = None
+if sys.platform.startswith("win32"):
+    tempo = time.time
+else:
+    tempo = time.clock
+
 
 class _delega(bt.DefaultDelegate):
     def __init__(self, coda):
@@ -94,8 +100,7 @@ if __name__ == '__main__':
         TOT = 10
         bene = 0
         tot = 0
-        #inizio = time.clock()
-        inizio = time.time()
+        inizio = tempo()
         for _ in range(TOT):
             x = ble.versione(500)
             if x is not None:
@@ -103,8 +108,7 @@ if __name__ == '__main__':
                 tot += x[1]
             else:
                 print('err versione')
-        #durata = time.clock() - inizio
-        durata = time.time() - inizio
+        durata = tempo() - inizio
         sdurata = utili.stampaDurata(int(round(durata * 1000.0, 0)))
         if TOT == bene:
             milli = round(1000.0 * durata / TOT, 3)
