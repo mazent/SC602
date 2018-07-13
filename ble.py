@@ -78,7 +78,7 @@ class IOEX(object):
         self.crtS.write(cmd, True)
 
         try:
-            if self.dev.waitForNotifications(.5):
+            if self.dev.waitForNotifications(1.0):
                 x = self.coda.get(False)
                 return x[1], len(x[1]) + len(cmd)
             else:
@@ -91,10 +91,11 @@ if __name__ == '__main__':
     mac = '00:a0:50:9e:2b:a7'
     ble = IOEX(mac)
     if ble.a_posto():
-        TOT = 100
+        TOT = 10
         bene = 0
         tot = 0
-        inizio = time.clock()
+        #inizio = time.clock()
+        inizio = time.time()
         for _ in range(TOT):
             x = ble.versione(500)
             if x is not None:
@@ -102,7 +103,8 @@ if __name__ == '__main__':
                 tot += x[1]
             else:
                 print('err versione')
-        durata = time.clock() - inizio
+        #durata = time.clock() - inizio
+        durata = time.time() - inizio
         sdurata = utili.stampaDurata(int(round(durata * 1000.0, 0)))
         if TOT == bene:
             milli = round(1000.0 * durata / TOT, 3)
