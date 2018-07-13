@@ -7,6 +7,7 @@ import json
 import time
 import random
 import string
+import sys
 try:
     # 2
     import Queue as coda
@@ -18,9 +19,9 @@ import utili
 
 tempo = None
 if sys.platform.startswith("win32"):
-    tempo = time.time
-else:
     tempo = time.clock
+else:
+    tempo = time.time
 
 
 class _delega(bt.DefaultDelegate):
@@ -97,12 +98,13 @@ if __name__ == '__main__':
     mac = '00:a0:50:9e:2b:a7'
     ble = IOEX(mac)
     if ble.a_posto():
-        TOT = 10
+        TOT = 50
         bene = 0
         tot = 0
         inizio = tempo()
         for _ in range(TOT):
-            x = ble.versione(500)
+            x = ble.versione()
+            #x = ble.versione(500)
             if x is not None:
                 bene += 1
                 tot += x[1]
