@@ -15,6 +15,8 @@ except ImportError:
     import queue as coda
 
 
+import utili
+
 class _delega(bt.DefaultDelegate):
     def __init__(self, coda):
         bt.DefaultDelegate.__init__(self)
@@ -61,7 +63,6 @@ class IOEX(object):
         if self.dev is not None:
             self.dev.disconnect()
 
-
     def a_posto(self):
         return self.crtS is not None
 
@@ -102,6 +103,16 @@ if __name__ == '__main__':
             else:
                 print('err versione')
         durata = time.clock() - inizio
+        sdurata = utili.stampaDurata(int(round(durata * 1000.0, 0)))
         if TOT == bene:
-            print('{0} byte in {1} secondi = {2} B/s'.format(tot, durata, tot / durata))
+            milli = round(1000.0 * durata / TOT, 3)
+            tput = round(tot / durata, 1)
+            kib = round(tot / (durata * 1024), 1)
+            print(
+                "Eco: OK %d in %s (%.3f ms = %.1f B/s = %.1f KiB/s)" %
+                (TOT, sdurata, milli, tput, kib))
+        else:
+            print(
+                "Eco: %d errori su %d [%s]" %
+                (TOT - bene, TOT, sdurata))
     del(ble)
